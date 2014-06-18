@@ -1,0 +1,33 @@
+func CONS[a,b] := CONS[a,b] end
+func CAR[a] := CAR[a] end
+func CDR[a] := CDR[a] end
+func Not[a] := Not[a] end
+func ToString[s] := ToString[s] end
+
+func Negative[a] := 0 - a end
+
+func List[r,n] :=
+    let func Helper[a] :=
+                if a < n | a = n
+                    then CONS[a, Helper[a+1]]
+                    else nil
+                end
+        end
+    in
+        Helper[r]
+    end
+end
+
+func Map[F, xs] :=
+    if xs = nil
+        then nil
+        else CONS[ F[CAR[xs]], Map[F, CDR[xs]] ]
+    end
+end
+
+func ConcatStrings[xss] :=
+    if xss = nil
+        then ""
+        else (CAR[xss]) . (ConcatStrings[CDR[xss]])
+    end
+end

@@ -1,0 +1,18 @@
+func Beer[n] :=
+    let
+        val m  := ToString[100-n] end
+        val m' := if n=99 then "no more" else ToString[100-n-1] end end
+
+        val line1 := m." bottles of beer on the wall, ".m." bottles of beer." end
+        val line2 := "Take one down and pass it around, ".m'." bottles of beer on the wall." end
+    in
+        line1 . "\n" . line2 . "\n\n"
+    end
+end
+
+val end_song :=
+    "No more bottles of beer on the wall, no more bottles of beer.\n"
+   ."Go to the store and buy some more, 99 bottles of beer on the wall."
+end
+
+exec ConcatStrings[ Map[Beer, List[1,99]] ] . end_song

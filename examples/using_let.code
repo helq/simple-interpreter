@@ -1,0 +1,9 @@
+func SomeFunction[n] :=
+    let
+        val r := 15 end
+    in
+        n*r
+    end
+end
+
+exec SomeFunction[3]

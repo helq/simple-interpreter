@@ -1,0 +1,3 @@
+func Double[n] := 2*n end
+
+exec Map[Double, List[1,10]]

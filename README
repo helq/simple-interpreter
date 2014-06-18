@@ -1,0 +1,8 @@
+Simple interpreter for a functional programming language in python with PLY
+
+Compilers Course's Final Project
+
+== How to exec? ==
+
+ex:
+  python main.py examples/99_bottles.code

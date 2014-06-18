@@ -1,0 +1,3 @@
+func F[b] := a*b end
+val a := 4 end
+exec let val a := 15 end in F[3] end

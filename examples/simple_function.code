@@ -1,0 +1,3 @@
+func Double[n] := 2*n end
+
+exec Double[3]
