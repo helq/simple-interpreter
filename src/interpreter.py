@@ -5,26 +5,26 @@
 
 primitives = ['CONS', 'CAR', 'CDR', 'Not', 'ToString']
 
-def isInEnvironments(id, environments):
-    lenEnvs = len(environments)
+def isInfacts_list(id, facts_list):
+    lenEnvs = len(facts_list)
     for i in range(lenEnvs-1,-1,-1):
-        if id in environments[i]:
+        if id in facts_list[i]:
             return True
     return False
 
-def getValueFromEnv(id, environments):
-    lenEnvs = len(environments)
+def getValueFromEnv(id, facts_list):
+    lenEnvs = len(facts_list)
     for i in range(lenEnvs-1,-1,-1):
-        if id in environments[i]:
-            return environments[i][id]
+        if id in facts_list[i]:
+            return facts_list[i][id]
 
-def execute(stm, environments):
+def execute(stm, facts_list):
     if stm["type"] == "stm_value": return (stm["type_value"], stm["value"])
 
     if stm["type"] == "stm_op":
         op = stm["op"]
-        typ1, val1 = execute(stm["value1"], environments)
-        typ2, val2 = execute(stm["value2"], environments)
+        typ1, val1 = execute(stm["value1"], facts_list)
+        typ2, val2 = execute(stm["value2"], facts_list)
         if op in {'+','-','*','/','<','>'}:
             if typ1 != "number" or typ2 != "number":
                 raise Exception("operation "+op+" valid only between numbers")
@@ -49,44 +49,44 @@ def execute(stm, environments):
             return ('boolean', val1 == val2)
 
     if stm["type"] == "stm_if_then":
-        typ_if, val_if = execute(stm["if"], environments)
+        typ_if, val_if = execute(stm["if"], facts_list)
         if typ_if != "boolean":
             raise Exception("`if` can only have boolean values")
-        if val_if: return execute(stm["then"], environments)
-        else:      return execute(stm["else"], environments)
+        if val_if: return execute(stm["then"], facts_list)
+        else:      return execute(stm["else"], facts_list)
 
     if stm["type"] == "stm_id":
         id = stm['id']
-        if not isInEnvironments(id, environments):
+        if not isInfacts_list(id, facts_list):
             raise Exception("value `"+id+"' not found")
-        depth_id = getValueFromEnv(id, environments)['depth']
+        depth_id = getValueFromEnv(id, facts_list)['depth']
         if depth_id == -1: # must have only a value
-            v = getValueFromEnv(id, environments)
+            v = getValueFromEnv(id, facts_list)
             return (v['type_value'], v['value'])
         else:
-            new_environments = environments[:depth_id+1]
-            return execute( getValueFromEnv(id, environments)['stm']
-                          , new_environments)
+            new_facts_list = facts_list[:depth_id+1]
+            return execute( getValueFromEnv(id, facts_list)['stm']
+                          , new_facts_list)
 
     if stm["type"] == "stm_let":
-        new_environments = environments[:]
-        new_environments.append( stm["facts"] )
-        return execute(stm["stm"], new_environments)
+        new_facts_list = facts_list[:]
+        new_facts_list.append( stm["facts"] )
+        return execute(stm["stm"], new_facts_list)
 
     if stm["type"] == "stm_func_call":
         id_func = stm['id_func']
 
         if id_func in primitives:
             args = stm["args"]
-            return execute_primitive(id_func, args, environments)
+            return execute_primitive(id_func, args, facts_list)
 
-        if not isInEnvironments(id_func, environments):
+        if not isInfacts_list(id_func, facts_list):
             raise Exception("function `"+id_func+"' not found")
 
-        depth_func = getValueFromEnv(id_func, environments)['depth']
-        new_environments = environments[:depth_func]
-        new_environment = environments[depth_func].copy()
-        params = getValueFromEnv(id_func, environments)['params']
+        depth_func = getValueFromEnv(id_func, facts_list)['depth']
+        new_facts_list = facts_list[:depth_func]
+        new_facts = facts_list[depth_func].copy()
+        params = getValueFromEnv(id_func, facts_list)['params']
         args = stm["args"]
 
         if len(args) != len(params):
@@ -105,62 +105,62 @@ def execute(stm, environments):
                                +args[i]['id_func']+"'")
 
             if params[i]['type'] == 'id_func':
-                # extracting function from environments
-                tmp = getValueFromEnv(args[i]['id_func'], environments).copy()
+                # extracting function from facts_list
+                tmp = getValueFromEnv(args[i]['id_func'], facts_list).copy()
                 new_id_func = params[i]['id_func']
-                # changing name of the function in the new_environment
+                # changing name of the function in the new_facts
                 tmp['name'] = new_id_func
-                new_environment[new_id_func] = tmp
+                new_facts[new_id_func] = tmp
             else: # then the argument is an statment
                 new_id = params[i]['id']
-                typ, val = execute(args[i], environments) # getting statement value
+                typ, val = execute(args[i], facts_list) # getting statement value
 
                 new_val = {'type': 'val',
                            'name': new_id,
                            'type_value': typ,
                            'value': val,
                            'depth': -1}
-                new_environment[new_id] = new_val
+                new_facts[new_id] = new_val
 
-        new_environments.append(new_environment)
-        return execute( getValueFromEnv(id_func, environments)['stm']
-                      , new_environments)
+        new_facts_list.append(new_facts)
+        return execute( getValueFromEnv(id_func, facts_list)['stm']
+                      , new_facts_list)
 
     # this must never happen
     return ("error: invalid type", "")
 
-def create_depth_in_facts(facts, depth):
+def add_depth_to_facts(facts, depth):
     for k, fact in facts.items():
         fact['depth'] = depth
-        create_depth_in_stm(fact["stm"], depth)
+        add_depth_to_facts_in_stm(fact["stm"], depth)
 
-def create_depth_in_stm(stm, depth):
+def add_depth_to_facts_in_stm(stm, depth):
     if stm["type"] in ["stm_value", "stm_id", "stm_func_call"]:
         return
     if stm["type"] == "stm_op":
-        create_depth_in_stm(stm["value1"], depth)
-        create_depth_in_stm(stm["value2"], depth)
+        add_depth_to_facts_in_stm(stm["value1"], depth)
+        add_depth_to_facts_in_stm(stm["value2"], depth)
     if stm["type"] == "stm_if_then":
-        create_depth_in_stm(stm["if"], depth)
-        create_depth_in_stm(stm["then"], depth)
-        create_depth_in_stm(stm["else"], depth)
+        add_depth_to_facts_in_stm(stm["if"], depth)
+        add_depth_to_facts_in_stm(stm["then"], depth)
+        add_depth_to_facts_in_stm(stm["else"], depth)
     if stm["type"] == "stm_let":
-        create_depth_in_stm(stm["stm"], depth+1)
-        create_depth_in_facts(stm["facts"], depth+1)
+        add_depth_to_facts_in_stm(stm["stm"], depth+1)
+        add_depth_to_facts(stm["facts"], depth+1)
 
 def execute_ast(ast):
-    create_depth_in_facts(ast['facts'], 0)
-    create_depth_in_stm(ast['stm'], 0)
-    return execute(stm=ast["stm"], environments=[ast["facts"]])
+    add_depth_to_facts(ast['facts'], 0)
+    add_depth_to_facts_in_stm(ast['stm'], 0)
+    return execute(stm=ast["stm"], facts_list=[ast["facts"]])
 
-def execute_primitive(id_func, args, environments):
+def execute_primitive(id_func, args, facts_list):
     if id_func == "CONS":
         if len(args) != 2:
             raise Exception("CONS has only two parameters")
         if args[0]['type'] == 'id_func' or args[1]['type'] == 'id_func':
             raise Exception("CONS do not accept functions as arguments")
-        val1 = execute(args[0], environments)
-        val2 = execute(args[1], environments)
+        val1 = execute(args[0], facts_list)
+        val2 = execute(args[1], facts_list)
         return ('cons', (val1, val2) )
 
     if id_func in ['CAR', 'CDR', 'Not', 'ToString']:
@@ -168,7 +168,7 @@ def execute_primitive(id_func, args, environments):
             raise Exception(id_func+" has only one parameter")
         if args[0]['type'] == 'id_func':
             raise Exception(id_func+" do not accept functions as arguments")
-        val = execute(args[0], environments)
+        val = execute(args[0], facts_list)
 
         if id_func == 'CAR':
             if val[0] != 'cons': raise Exception("value for CAR function must be of type `cons'")
