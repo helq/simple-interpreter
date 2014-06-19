@@ -83,11 +83,19 @@ def execute(stm, facts_list):
         if not isInfacts_list(id_func, facts_list):
             raise Exception("function `"+id_func+"' not found")
 
-        depth_func = getValueFromEnv(id_func, facts_list)['depth']
-        new_facts_list = facts_list[:depth_func]
-        new_facts = facts_list[depth_func].copy()
-        params = getValueFromEnv(id_func, facts_list)['params']
+        func_node = getValueFromEnv(id_func, facts_list)
+        depth_func = func_node['depth']
+        params = func_node['params']
         args = stm["args"]
+
+        if depth_func < len(facts_list):
+            new_facts_list = facts_list[:depth_func]
+            new_facts = facts_list[depth_func].copy()
+        elif depth_func == len(facts_list):
+            new_facts_list = facts_list[:depth_func]
+            new_facts = func_node['facts'].copy()
+        else: # this must never happen
+            raise Exception("trying to access to a fact that is not in the scope, this is a bug from the interpreter")
 
         if len(args) != len(params):
             raise Exception("different number of parameters calling function `"
@@ -123,8 +131,7 @@ def execute(stm, facts_list):
                 new_facts[new_id] = new_val
 
         new_facts_list.append(new_facts)
-        return execute( getValueFromEnv(id_func, facts_list)['stm']
-                      , new_facts_list)
+        return execute( func_node['stm'] , new_facts_list)
 
     # this must never happen
     return ("error: invalid type", "")
@@ -132,6 +139,7 @@ def execute(stm, facts_list):
 def add_depth_to_facts(facts, depth):
     for k, fact in facts.items():
         fact['depth'] = depth
+        fact['facts'] = facts
         add_depth_to_facts_in_stm(fact["stm"], depth)
 
 def add_depth_to_facts_in_stm(stm, depth):

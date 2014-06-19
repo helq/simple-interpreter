@@ -63,6 +63,11 @@ def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
 
+# a comment
+def t_ignore_comments(t):
+    r'\#[^\n]*'
+
+
 # A string containing ignored characters (spaces and tabs)
 t_ignore  = ' \t'
 

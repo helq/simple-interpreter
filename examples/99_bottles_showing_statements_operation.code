@@ -1,7 +1,7 @@
-# example of 99 bottles' horrible song, I prefer soda
+# showing that the base of the languague are statements
 
+exec let
 val nl := 99 end
-
 func Beer[n] :=
     let
         val m  := ToString[nl+1-n] end
@@ -19,4 +19,5 @@ val end_song :=
    ."Go to the store and buy some more, ".ToString[nl]." bottles of beer on the wall."
 end
 
-exec ConcatStrings[ Map[Beer, List[1, nl]] ] . end_song
+in ConcatStrings[ Map[Beer, List[1, nl]] ] . end_song
+end
