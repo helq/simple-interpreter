@@ -2,7 +2,15 @@ Simple interpreter for a functional programming language in python with PLY
 
 Compilers Course's Final Project
 
+Prerrequisites:
+- Python 2
+- PLY (http://www.dabeaz.com/ply/)
+
 == How to exec? ==
 
-ex:
+Linux:
   python main.py examples/99_bottles.code
+
+Windows:
+  python join_for_Windows.py
+  python main_Windows.py examples/99_bottles.code
